@@ -1,154 +1,150 @@
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.*;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Locale;
+import java.util.Random;
+import java.time.DayOfWeek;
+import java.time.format.TextStyle;
 
-// Задание 1: Работа с потоками ввода-вывода
-class FileUpperCaseConverter {
-    public static void convertFile(String inputFilePath, String outputFilePath) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(inputFilePath));
-             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilePath))) {
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                writer.write(line.toUpperCase());
-                writer.newLine();
-            }
-            System.out.println("Файл успешно обработан и записан в " + outputFilePath);
-
-        } catch (IOException e) {
-            System.err.println("Ошибка: " + e.getMessage());
-        }
-    }
-}
-
-// Задание 2: Реализация паттерна Декоратор
-interface TextProcessor {
-    String process(String text);
-}
-
-class SimpleTextProcessor implements TextProcessor {
-    @Override
-    public String process(String text) {
-        return text;
-    }
-}
-
-class UpperCaseDecorator implements TextProcessor {
-    private TextProcessor processor;
-
-    public UpperCaseDecorator(TextProcessor processor) {
-        this.processor = processor;
-    }
-
-    @Override
-    public String process(String text) {
-        return processor.process(text).toUpperCase();
-    }
-}
-
-class TrimDecorator implements TextProcessor {
-    private TextProcessor processor;
-
-    public TrimDecorator(TextProcessor processor) {
-        this.processor = processor;
-    }
-
-    @Override
-    public String process(String text) {
-        return processor.process(text).trim();
-    }
-}
-
-class ReplaceDecorator implements TextProcessor {
-    private TextProcessor processor;
-
-    public ReplaceDecorator(TextProcessor processor) {
-        this.processor = processor;
-    }
-
-    @Override
-    public String process(String text) {
-        return processor.process(text).replace(' ', '_');
-    }
-}
-
-// Задание 3: Сравнение производительности IO и NIO
-class IOvsNIOComparison {
-    public static void comparePerformance(String inputFilePath, String outputFilePathIO, String outputFilePathNIO) {
-        long startTimeIO = System.nanoTime();
-        copyFileUsingIO(inputFilePath, outputFilePathIO);
-        long endTimeIO = System.nanoTime();
-        System.out.println("Время выполнения IO: " + (endTimeIO - startTimeIO) + " наносекунд");
-
-        long startTimeNIO = System.nanoTime();
-        copyFileUsingNIO(inputFilePath, outputFilePathNIO);
-        long endTimeNIO = System.nanoTime();
-        System.out.println("Время выполнения NIO: " + (endTimeNIO - startTimeNIO) + " наносекунд");
-    }
-
-    private static void copyFileUsingIO(String inputPath, String outputPath) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(inputPath));
-             BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath))) {
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                writer.write(line);
-                writer.newLine();
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void copyFileUsingNIO(String inputPath, String outputPath) {
-        try (FileChannel sourceChannel = new FileInputStream(inputPath).getChannel();
-             FileChannel destChannel = new FileOutputStream(outputPath).getChannel()) {
-
-            destChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-}
-
-// Задание 4: Программа с использованием Java NIO
-class NIOCopy {
-    public static void copyFile(String inputFilePath, String outputFilePath) {
-        try (FileChannel sourceChannel = new FileInputStream(inputFilePath).getChannel();
-             FileChannel destChannel = new FileOutputStream(outputFilePath).getChannel()) {
-
-            sourceChannel.transferTo(0, sourceChannel.size(), destChannel);
-            System.out.println("Файл успешно скопирован с использованием NIO.");
-
-        } catch (IOException e) {
-            System.err.println("Ошибка при копировании файла: " + e.getMessage());
-        }
-    }
-}
-
-// Главный класс для демонстрации всех заданий
 public class Main {
     public static void main(String[] args) {
-        // Задание 1
-        FileUpperCaseConverter.convertFile("input.txt", "output_upper.txt");
+        // 1. Основы LocalDate и LocalTime
+        LocalDate currentDate = LocalDate.now();
+        LocalTime currentTime = LocalTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+        System.out.println("Текущие дата и время: " +
+                currentDate.atTime(currentTime).format(formatter));
 
-        // Задание 2
-        TextProcessor processor = new SimpleTextProcessor();
-        processor = new UpperCaseDecorator(processor);
-        processor = new TrimDecorator(processor);
-        processor = new ReplaceDecorator(processor);
+        System.out.println("\nТестирование методов:");
 
-        String text = "  Hello, World!  ";
-        String result = processor.process(text);
-        System.out.println("Результат декораторов: " + result);
+        // 2. Сравнение дат
+        LocalDate date1 = LocalDate.of(2025, 1, 1);
+        LocalDate date2 = LocalDate.of(2024, 12, 31);
+        System.out.println("Сравнение дат: " + compareDates(date1, date2));
 
-        // Задание 3
-        IOvsNIOComparison.comparePerformance("large_input.txt", "output_io.txt", "output_nio.txt");
+        // 3. Дней до Нового года
+        System.out.println("Дней до Нового года: " + daysUntilNewYear());
 
-        // Задание 4
-        NIOCopy.copyFile("large_input.txt", "copy_nio.txt");
+        // 15. Определение дня недели
+        System.out.println(getDayOfWeekInRussian(date1));
+
+
+
+    }
+
+    // 2. Сравнение дат
+    public static String compareDates(LocalDate date1, LocalDate date2) {
+        if (date1.isEqual(date2)) {
+            return "Даты равны";
+        } else if (date1.isBefore(date2)) {
+            return "Первая дата раньше второй";
+        } else {
+            return "Первая дата позже второй";
+        }
+    }
+
+    // 3. Сколько дней до Нового года
+    public static long daysUntilNewYear() {
+        LocalDate today = LocalDate.now();
+        LocalDate newYear = LocalDate.of(today.getYear() + 1, 1, 1);
+        return ChronoUnit.DAYS.between(today, newYear);
+    }
+
+    // 4. Проверка високосного года
+    public static boolean isLeapYear(int year) {
+        return Year.isLeap(year);
+    }
+
+    // 5. Подсчет выходных за месяц
+    public static int getWeekendDaysInMonth(int year, int month) {
+        LocalDate date = LocalDate.of(year, month, 1);
+        int weekendDays = 0;
+        while (date.getMonthValue() == month) {
+            if (date.getDayOfWeek() == DayOfWeek.SATURDAY ||
+                    date.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                weekendDays++;
+            }
+            date = date.plusDays(1);
+        }
+        return weekendDays;
+    }
+
+    // 6. Расчет времени выполнения метода
+    public static long measureExecutionTime(Runnable method) {
+        long startTime = System.nanoTime();
+        method.run();
+        long endTime = System.nanoTime();
+        return (endTime - startTime) / 1_000_000; // в миллисекундах
+    }
+
+    // 7. Форматирование и парсинг даты
+    public static String formatAndAddDays(String dateStr) {
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+        LocalDate date = LocalDate.parse(dateStr, inputFormatter);
+        return date.plusDays(10).format(outputFormatter);
+    }
+
+    // 8. Конвертация между часовыми поясами
+    public static ZonedDateTime convertTimeZone(LocalDateTime dateTime,
+                                                String targetZone) {
+        ZonedDateTime utcTime = dateTime.atZone(ZoneId.of("UTC"));
+        return utcTime.withZoneSameInstant(ZoneId.of(targetZone));
+    }
+
+    // 9. Вычисление возраста
+    public static int calculateAge(LocalDate birthDate) {
+        return Period.between(birthDate, LocalDate.now()).getYears();
+    }
+
+    // 10. Календарь на месяц
+    public static void printMonthCalendar(int year, int month) {
+        LocalDate date = LocalDate.of(year, month, 1);
+        while (date.getMonthValue() == month) {
+            String dayType = (date.getDayOfWeek() == DayOfWeek.SATURDAY ||
+                    date.getDayOfWeek() == DayOfWeek.SUNDAY)
+                    ? "выходной" : "рабочий";
+            System.out.printf("%s - %s%n",
+                    date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")), dayType);
+            date = date.plusDays(1);
+        }
+    }
+
+    // 11. Генерация случайной даты
+    public static LocalDate generateRandomDate(LocalDate startDate, LocalDate endDate) {
+        long startEpochDay = startDate.toEpochDay();
+        long endEpochDay = endDate.toEpochDay();
+        long randomDay = startEpochDay +
+                new Random().nextLong(endEpochDay - startEpochDay + 1);
+        return LocalDate.ofEpochDay(randomDay);
+    }
+
+    // 12. Расчет времени до события
+    public static String timeUntilEvent(LocalDateTime eventTime) {
+        LocalDateTime now = LocalDateTime.now();
+        Duration duration = Duration.between(now, eventTime);
+        return String.format("Осталось: %d часов, %d минут, %d секунд",
+                duration.toHours(),
+                duration.toMinutesPart(),
+                duration.toSecondsPart());
+    }
+
+    // 13. Вычисление рабочих часов
+    public static double calculateWorkingHours(LocalDateTime start, LocalDateTime end) {
+        Duration duration = Duration.between(start, end);
+        return duration.toMinutes() / 60.0;
+    }
+
+    // 14. Конвертация даты с учетом локали
+    public static String formatDateWithLocale(LocalDate date, Locale locale) {
+        DateTimeFormatter formatter = DateTimeFormatter
+                .ofPattern("d MMMM yyyy", locale);
+        return date.format(formatter);
+    }
+
+    // 15. Определение дня недели
+    public static String getDayOfWeekInRussian(LocalDate date) {
+        return date.getDayOfWeek()
+                .getDisplayName(TextStyle.FULL, new Locale("ru"));
     }
 }
