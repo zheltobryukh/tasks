@@ -1,9 +1,7 @@
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.*;
+import java.util.*;
 
-public abstract class Animal {
+abstract class Animal {
     protected double weight;
     protected int maxPerCell;
     protected int speed;
@@ -30,7 +28,7 @@ public abstract class Animal {
     }
 }
 
-public abstract class Predator extends Animal {
+abstract class Predator extends Animal {
     public Predator(double weight, int maxPerCell, int speed, double foodNeeded) {
         super(weight, maxPerCell, speed, foodNeeded);
     }
@@ -41,7 +39,7 @@ public abstract class Predator extends Animal {
     }
 }
 
-public class Wolf extends Predator {
+class Wolf extends Predator {
     public Wolf() {
         super(50, 30, 3, 8);
     }
@@ -57,7 +55,7 @@ public class Wolf extends Predator {
     }
 }
 
-public abstract class Herbivore extends Animal {
+abstract class Herbivore extends Animal {
     public Herbivore(double weight, int maxPerCell, int speed, double foodNeeded) {
         super(weight, maxPerCell, speed, foodNeeded);
     }
@@ -68,7 +66,7 @@ public abstract class Herbivore extends Animal {
     }
 }
 
-public class Rabbit extends Herbivore {
+class Rabbit extends Herbivore {
     public Rabbit() {
         super(2, 150, 2, 0.45);
     }
@@ -84,7 +82,7 @@ public class Rabbit extends Herbivore {
     }
 }
 
-public class Plant {
+class Plant {
     private static final double MAX_GROWTH = 1.0;
     private double size = MAX_GROWTH;
 
@@ -101,9 +99,7 @@ public class Plant {
     }
 }
 
-
-
-public class Location {
+class Location {
     private List<Animal> animals = new CopyOnWriteArrayList<>();
     private Plant plant = new Plant();
 
@@ -124,7 +120,7 @@ public class Location {
     }
 }
 
-public class Island {
+class Island {
     private final int width;
     private final int height;
     private final Location[][] grid;
@@ -146,22 +142,26 @@ public class Island {
     }
 }
 
-
-
-public class Simulation {
+public class Main {
     private static final int WIDTH = 100;
     private static final int HEIGHT = 20;
     private static final int CYCLE_TIME = 1; // 1 секунда
 
-    private final Island island = new Island(WIDTH, HEIGHT);
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
-    private final ExecutorService animalPool = Executors.newFixedThreadPool(10);
+    private static final Island island = new Island(WIDTH, HEIGHT);
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
+    private static final ExecutorService animalPool = Executors.newFixedThreadPool(10);
 
-    public void start() {
-        scheduler.scheduleAtFixedRate(this::simulateCycle, 0, CYCLE_TIME, TimeUnit.SECONDS);
+    public static void main(String[] args) {
+        // Добавляем начальных животных на остров
+        for (int i = 0; i < 10; i++) {
+            island.getLocation(ThreadLocalRandom.current().nextInt(WIDTH), ThreadLocalRandom.current().nextInt(HEIGHT)).addAnimal(new Wolf());
+            island.getLocation(ThreadLocalRandom.current().nextInt(WIDTH), ThreadLocalRandom.current().nextInt(HEIGHT)).addAnimal(new Rabbit());
+        }
+
+        scheduler.scheduleAtFixedRate(Main::simulateCycle, 0, CYCLE_TIME, TimeUnit.SECONDS);
     }
 
-    private void simulateCycle() {
+    private static void simulateCycle() {
         System.out.println("=== Новый цикл симуляции ===");
 
         // Рост растений
@@ -181,12 +181,5 @@ public class Simulation {
                 }
             }
         }
-    }
-}
-
-public class Main {
-    public static void main(String[] args) {
-        Simulation simulation = new Simulation();
-        simulation.start();
     }
 }
